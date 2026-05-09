@@ -13,6 +13,7 @@
 #include "AbilitySystemComponent.h"
 #include "PXFormAsset.h"
 #include "Blueprint/UserWidget.h"
+#include "PXGameplayAbility.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -231,6 +232,30 @@ void ALimitBreakWarzoneCharacter::GiveDefaultAbilities()
 	// 1. 顶层卫语句：检查 ASC 和 权限
 	if (!AbilitySystemComponent || !HasAuthority()) return;
 
+	for (TSubclassOf<UGameplayAbility>& AbilityClass : GlobalAbilities)
+	{
+		if (AbilityClass)
+		{
+			// 对于全局技能，我们需要通过标签自动判断其 InputID
+			// 获取技能的默认对象 (CDO) 来读取它的标签
+			const UPXGameplayAbility* AbilityCDO = Cast<UPXGameplayAbility>(AbilityClass.GetDefaultObject());
+			if (!AbilityCDO)	return;
+			FGameplayTagContainer AbilityTags = AbilityCDO->AbilityTags;
+
+			int32 InputID = static_cast<int32>(EHeroInputID::None);
+            
+			// 逻辑映射：如果技能带有 Reload 标签，赋予 R 键 ID
+			if (AbilityTags.HasTag(FGameplayTag::RequestGameplayTag(FName("Ability.Weapon.Reload"))))
+			{
+				InputID = static_cast<int32>(EHeroInputID::Relode);; // 假设 6 是你枚举里的 Reload (R键)
+			}
+			// 以后可以继续在这里添加：如果是交互标签 -> 赋予 F 键 ID
+
+			AbilitySystemComponent->GiveAbility(FGameplayAbilitySpec(AbilityClass, 1, InputID, this));
+		}
+	}
+
+	
 	for (UPXFormAsset* FormAsset : AvailableForms)
 	{
 		// 2. 循环卫语句：跳过无效的资产
@@ -348,11 +373,8 @@ void ALimitBreakWarzoneCharacter::AbilityInputPressed(EHeroInputID InputID)
 {
 	if (AbilitySystemComponent)
 	{
-		// 1. 通知 GAS 系统该 ID 对应的按键按下了
+		// 通知 GAS 系统该 ID 对应的按键按下了
 		AbilitySystemComponent->AbilityLocalInputPressed(static_cast<int32>(InputID));
-		
-		// 2. 如果你还保留着 SendGameplayEvent 逻辑，可以在这里继续调用
-		// SendInputToGAS(InputID, true);
 	}
 }
 
@@ -360,19 +382,6 @@ void ALimitBreakWarzoneCharacter::AbilityInputReleased(EHeroInputID InputID)
 {
 	if (AbilitySystemComponent)
 	{
-		// 1. 保留原本的信号（给 C++ 逻辑用）
 		AbilitySystemComponent->AbilityLocalInputReleased(static_cast<int32>(InputID));
-
-		/* 2. 【核心改进】如果是左键松开，发送一个明确的 Gameplay Event
-		if (InputID == EHeroInputID::PrimaryAttack)
-		{
-			FGameplayTag ReleaseTag = FGameplayTag::RequestGameplayTag(FName("Input.Action.LMB.Released"));
-			FGameplayEventData Payload;
-			Payload.EventTag = ReleaseTag;
-			Payload.Instigator = this; // 告诉系统谁发的
-			
-			// 传入 Payload 的地址 (&Payload)
-			AbilitySystemComponent->HandleGameplayEvent(ReleaseTag, &Payload);
-		}*/
 	}
 }

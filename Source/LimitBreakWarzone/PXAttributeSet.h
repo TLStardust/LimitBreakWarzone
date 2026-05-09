@@ -41,6 +41,14 @@ public:
 	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
 	FGameplayAttributeData Damage;
 	ATTRIBUTE_ACCESSORS(UPXAttributeSet, Damage);
+	
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
+	FGameplayAttributeData Ammo;
+	ATTRIBUTE_ACCESSORS(UPXAttributeSet, Ammo);
+
+	UPROPERTY(BlueprintReadOnly, Category = "Attributes")
+	FGameplayAttributeData MaxAmmo;
+	ATTRIBUTE_ACCESSORS(UPXAttributeSet, MaxAmmo);
 
 	// 当属性发生变化前的处理（比如防止生命值超过最大值）
 	virtual void PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue) override;

@@ -36,7 +36,8 @@ enum class EHeroInputID : uint8
 	SecondaryAttack, // 右键
 	Skill_E,         // E
 	Skill_Shift,     // Shift
-	Skill_Q          // Q (Ultimate)
+	Skill_Q,          // Q (Ultimate)
+	Relode			//R
 };
 
 UCLASS(config=Game)
@@ -94,6 +95,10 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GAS")
 	TArray<TSubclassOf<class UGameplayAbility>> DefaultAbilities;
 	
+	// 专门存放不随形态切换的“常驻技能”（如：装弹、跳跃、交互）
+	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GAS|Setup")
+	TArray<TSubclassOf<class UGameplayAbility>> GlobalAbilities;
+	
 	// 当输入被触发时调用的通用函数
 	void SendInputToGAS(EHeroInputID InputID, bool bPressed);
 
@@ -120,7 +125,10 @@ protected:
 	void OnStackChanged(FActiveGameplayEffectHandle ActiveHandle, int32 NewStack, int32 OldStack);
 	
 	// 通用的输入处理器
+	UFUNCTION(BlueprintCallable)
 	void AbilityInputPressed(EHeroInputID InputID);
+	
+	UFUNCTION(BlueprintCallable)
 	void AbilityInputReleased(EHeroInputID InputID);
 	
 	// 假设你有这些具体的 InputAction 变量（如果没有，请在蓝图细节面板赋值）

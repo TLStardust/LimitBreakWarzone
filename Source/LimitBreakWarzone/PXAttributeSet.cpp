@@ -9,6 +9,8 @@ UPXAttributeSet::UPXAttributeSet()
 	// 初始化数值（以后可以从 DataAsset 读取）
 	InitHealth(100.0f);
 	InitMaxHealth(100.0f);
+	InitAmmo(30.0f);
+	InitMaxAmmo(30.0f);
 }
 
 void UPXAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, float& NewValue)
@@ -20,6 +22,11 @@ void UPXAttributeSet::PreAttributeChange(const FGameplayAttribute& Attribute, fl
 	if (Attribute == GetHealthAttribute())
 	{
 		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxHealth());
+	}
+	
+	if (Attribute == GetAmmoAttribute())
+	{
+		NewValue = FMath::Clamp(NewValue, 0.0f, GetMaxAmmo());
 	}
 	
 	
@@ -44,15 +51,4 @@ void UPXAttributeSet::PostGameplayEffectExecute(const FGameplayEffectModCallback
 			UE_LOG(LogTemp, Warning, TEXT("Character took %f damage! Current Health: %f"), LocalDamageDone, GetHealth());
 		}
 	}
-	
-	/*if (Data.EvaluatedData.Attribute == GetHealthAttribute())
-	{
-		// 打印出：是谁（目标名称）的血量变成了多少
-		AActor* TargetActor = Data.Target.GetAvatarActor();
-		float CurrentHealth = GetHealth();
-		
-		UE_LOG(LogTemp, Warning, TEXT("!!! ATTRIBUTE UPDATE !!! Actor: [%s] now has Health: [%f]"), 
-			TargetActor ? *TargetActor->GetName() : TEXT("None"), 
-			CurrentHealth);
-	}*/
 }

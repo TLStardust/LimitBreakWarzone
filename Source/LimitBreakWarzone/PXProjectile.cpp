@@ -182,48 +182,4 @@ void APXProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPri
     // 播放爆炸特效并销毁
     // SpawnExplosionVisuals();
     Destroy();
-	
-	/* 2. 基础过滤：不打自己，且目标必须存在
-	if (!OtherActor || OtherActor == GetOwner())
-	{
-		Destroy();
-		return;
-	}
-
-	// 3. 获取目标和来源的 ASC (使用通用库函数更稳健)
-	UAbilitySystemComponent* TargetASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(OtherActor);
-	UAbilitySystemComponent* SourceASC = UAbilitySystemBlueprintLibrary::GetAbilitySystemComponent(GetOwner());
-	
-	if (TargetASC && SourceASC)
-	{
-		// 4. 创建 Context (环境上下文)
-		FGameplayEffectContextHandle Context = SourceASC->MakeEffectContext();
-		Context.AddHitResult(Hit);
-		Context.AddInstigator(GetInstigator(), this);
-
-		// 5. 创建 Spec (规格句柄)
-		/*FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(DamageEffectClass, 1.0f, Context);
-		
-		if (SpecHandle.IsValid())
-		{
-			// 6. 应用效果
-			SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
-		}
-		
-		for (auto& GEClass : ImpactGameplayEffects)
-		{
-			if (!GEClass) continue; // 安全检查
-
-			FGameplayEffectSpecHandle SpecHandle = SourceASC->MakeOutgoingSpec(GEClass, 1.0f, Context);
-			if (SpecHandle.IsValid())
-			{
-				SourceASC->ApplyGameplayEffectSpecToTarget(*SpecHandle.Data.Get(), TargetASC);
-			}
-		}
-	}
-
-	// 7. 处理视觉特效 (播放爆炸粒子等)
-	// ExecuteVisualEffects();
-
-	Destroy();*/
 }
