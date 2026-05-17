@@ -37,4 +37,15 @@ public:
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Visuals")
 	FLinearColor FormColor;
 	
+	// 【核心新增】该形态在主武器栏显示的图标（如：火元素徽标）
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	TObjectPtr<UTexture2D> FormIcon;
+
+	// 【核心新增】该形态默认的弹药上限
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stats")
+	float DefaultMaxAmmo = 30.0f;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Stats")
+	float ReloadDuration = 1.5f;
+	
 };

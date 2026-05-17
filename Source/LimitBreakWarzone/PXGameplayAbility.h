@@ -17,12 +17,7 @@ class LIMITBREAKWARZONE_API UPXGameplayAbility : public UGameplayAbility
 	
 public:
 	UPXGameplayAbility();
-
-	// 这个技能所属的形态标签（例如：State.Form.Fire）
-	// 我们在 C++ 定义它，所有子类蓝图都能看到
-	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "Ability Info")
-	FGameplayTag AbilityFormTag;
-
+	
 	// 辅助函数：快速获取我们的主角类（替代蓝图里的 Cast To）
 	UFUNCTION(BlueprintPure, Category = "Ability Info")
 	class ALimitBreakWarzoneCharacter* GetHeroCharacterFromActorInfo() const;
@@ -32,5 +27,11 @@ public:
 	
 	UFUNCTION(BlueprintPure, Category = "Ability|Utility")
 	void PredictPath(FPredictProjectilePathParams PredictParams, FPredictProjectilePathResult& PredictResult) const;
+	
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	TObjectPtr<UTexture2D> AbilityIcon; // 技能图标
+
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	FText KeyHint; // 按键提示，如 "Q", "E", "Shift"
 	
 };

@@ -44,7 +44,7 @@ APXProjectile::APXProjectile()
 	ProjectileMovement->ProjectileGravityScale = 0.0f;
 
 	// 4. 设置子弹的寿命 (例如 5秒后自动销毁，防止子弹飞出地图外无限浪费资源)
-	InitialLifeSpan = 5.0f;
+	InitialLifeSpan = 10.0f;
 
 }
 
@@ -78,15 +78,13 @@ void APXProjectile::OnHit(UPrimitiveComponent* HitComp, AActor* OtherActor, UPri
         IgnoreActors.Add(GetOwner()); // 忽略自己（发射者）
         
         TArray<AActor*> OutActors;
-        TArray<TEnumAsByte<EObjectTypeQuery>> ObjectTypes;
-        ObjectTypes.Add(UEngineTypes::ConvertToObjectType(ECollisionChannel::ECC_Pawn)); // 只打活物
 
         // 核心：球体范围重叠检测
         bool bHadHit = UKismetSystemLibrary::SphereOverlapActors(
             GetWorld(), 
             GetActorLocation(), 
             ExplosionRadius, 
-            ObjectTypes, 
+            DetectionObjectTypes,
             nullptr, // 不限制特定类
             IgnoreActors, 
             OutActors

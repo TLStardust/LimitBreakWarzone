@@ -38,10 +38,7 @@ public:
 	// 碰撞球
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Collision")
 	class USphereComponent* SphereComponent;
-
-	// 关键：该子弹命中后要应用给敌人的 Gameplay Effect
-	/*UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
-	TSubclassOf<class UGameplayEffect> DamageEffectClass;*/
+	
 	
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS")
 	TArray<FGEEffectData> ImpactEffects;
@@ -53,6 +50,9 @@ public:
 	// 绘制调试球体，方便测试
 	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS|Debug")
 	bool bShowDebugSphere = false;
+	
+	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "GAS|Explosion")
+	TArray<TEnumAsByte<EObjectTypeQuery>> DetectionObjectTypes;
 	
 protected:
 	// Called when the game starts or when spawned

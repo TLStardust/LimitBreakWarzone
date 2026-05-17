@@ -20,8 +20,10 @@ APXEnemyBase::APXEnemyBase()
 	// 初始化头顶血条
 	HealthBarWidget = CreateDefaultSubobject<UWidgetComponent>(TEXT("HealthBarWidget"));
 	HealthBarWidget->SetupAttachment(RootComponent);
-	HealthBarWidget->SetRelativeLocation(FVector(0, 0, 100.0f)); // 移到头顶
+	HealthBarWidget->SetRelativeLocation(FVector(0, 0, 135.0f)); // 移到头顶
 	HealthBarWidget->SetWidgetSpace(EWidgetSpace::World); 
+	HealthBarWidget->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	
 
 }
 
@@ -32,11 +34,32 @@ void APXEnemyBase::BeginPlay()
 	
 	if (AbilitySystemComponent)
 	{
+		AbilitySystemComponent->InitAbilityActorInfo(this, this);
 		// 绑定血量变化监听（这相当于蓝图里的“绑定事件”）
 		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetHealthAttribute())
 			.AddUObject(this, &APXEnemyBase::HealthChanged);
 		
 		OnHealthChanged.Broadcast(AttributeSet->GetHealth(), AttributeSet->GetMaxHealth());
+		
+		// 监听 GE 增加
+		AbilitySystemComponent->OnActiveGameplayEffectAddedDelegateToSelf.AddUObject(this, &APXEnemyBase::OnActiveGEAdded);
+		// 监听 GE 移除
+		AbilitySystemComponent->OnAnyGameplayEffectRemovedDelegate().AddUObject(this, &APXEnemyBase::OnActiveGERemoved);
+		
+		// 构造标签
+		// RequestGameplayTag 会去标签库里寻找对应的标签。
+		// 注意：如果项目设置里没定义这个标签，它会返回一个无效标签，所以确保已经在编辑器里添加了它。
+		FGameplayTag EnemyTag = FGameplayTag::RequestGameplayTag(FName("Character.Faction.Enemy"));
+
+		if (EnemyTag.IsValid())
+		{
+			AbilitySystemComponent->AddLooseGameplayTag(EnemyTag);
+			UE_LOG(LogTemp, Warning, TEXT("!!! SUCCESS: Added Tag %s to %s"), *EnemyTag.ToString(), *GetName());
+		}
+		else
+		{
+			UE_LOG(LogTemp, Error, TEXT("!!! ERROR: Tag 'Character.Faction.Enemy' NOT FOUND in settings !!!"));
+		}
 	}
 	
 	
@@ -59,14 +82,6 @@ void APXEnemyBase::BeginPlay()
 			// 3. 握手成功后，立即广播一次，让血条显示初始的 100%
 			OnHealthChanged.Broadcast(AttributeSet->GetHealth(), AttributeSet->GetMaxHealth());
 		}
-	}
-	
-	if (AbilitySystemComponent)
-	{
-		// 监听 GE 增加
-		AbilitySystemComponent->OnActiveGameplayEffectAddedDelegateToSelf.AddUObject(this, &APXEnemyBase::OnActiveGEAdded);
-		// 监听 GE 移除
-		AbilitySystemComponent->OnAnyGameplayEffectRemovedDelegate().AddUObject(this, &APXEnemyBase::OnActiveGERemoved);
 	}
 }
 

@@ -16,6 +16,7 @@ class UCameraComponent;
 class UInputAction;
 class UInputMappingContext;
 struct FInputActionValue;
+struct FOnAttributeChangeData; 
 
 DECLARE_LOG_CATEGORY_EXTERN(LogTemplateCharacter, Log, All);
 
@@ -25,6 +26,8 @@ DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnPlayerAttributeChangedSignature,
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_ThreeParams(FOnPlayerStatusChangedSignature, FGameplayTag, StatusTag, int32, NewStack, bool, bRemoved);
 
 DECLARE_DYNAMIC_MULTICAST_DELEGATE_OneParam(FOnFormChangedSignature, UPXFormAsset*, NewForm);
+
+DECLARE_DYNAMIC_MULTICAST_DELEGATE_TwoParams(FOnAmmoChangedSignature, float, Ammo, float, MaxAmmo);
 
 UENUM(BlueprintType)
 enum class EHeroInputID : uint8
@@ -79,6 +82,11 @@ public:
 	
 	UPROPERTY(BlueprintAssignable, Category = "Combat|UI")
 	FOnFormChangedSignature OnFormChanged;
+	
+	UPROPERTY(BlueprintAssignable, Category = "Combat|UI")
+	FOnAmmoChangedSignature OnAmmoChanged;
+	
+	void OnReloadTagChanged(const FGameplayTag Tag, int32 NewCount);
 
 protected:
 	virtual void BeginPlay();
@@ -118,6 +126,7 @@ protected:
 	
 	// 内部使用的监听回调
 	void OnHealthChangedNative(const FOnAttributeChangeData& Data);
+	void OnAmmoChangedNative(const FOnAttributeChangeData& Data);
     
 	// 状态改变相关的监听回调（参考敌人的代码）
 	void OnActiveGEAdded(UAbilitySystemComponent* Target, const FGameplayEffectSpec& SpecApplied, FActiveGameplayEffectHandle ActiveHandle);

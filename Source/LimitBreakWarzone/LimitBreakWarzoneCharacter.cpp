@@ -14,6 +14,7 @@
 #include "PXFormAsset.h"
 #include "Blueprint/UserWidget.h"
 #include "PXGameplayAbility.h"
+#include "GameplayEffectTypes.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -89,7 +90,18 @@ void ALimitBreakWarzoneCharacter::BeginPlay()
 		AbilitySystemComponent->OnAnyGameplayEffectRemovedDelegate().AddUObject(this, &ALimitBreakWarzoneCharacter::OnActiveGERemoved);
 
 		// 3. 初始广播：进游戏时先喊一遍，让 UI 显示初始值
+		AbilitySystemComponent->GetGameplayAttributeValueChangeDelegate(AttributeSet->GetAmmoAttribute())
+	.AddUObject(this, &ALimitBreakWarzoneCharacter::OnAmmoChangedNative);
+		
+		OnFormChanged.Broadcast(ActiveFormAsset);
+		OnAmmoChanged.Broadcast(AttributeSet->GetAmmo(), AttributeSet->GetMaxAmmo());
 		OnPlayerHealthChanged.Broadcast(AttributeSet->GetHealth(), AttributeSet->GetMaxHealth());
+		
+		// 【核心修正】直接监听“装弹标签”的出现和消失
+		AbilitySystemComponent->RegisterGameplayTagEvent(
+			FGameplayTag::RequestGameplayTag(FName("State.Weapon.Reloading")),
+			EGameplayTagEventType::NewOrRemoved // 监听“新增”或“移除”
+		).AddUObject(this, &ALimitBreakWarzoneCharacter::OnReloadTagChanged);
 	}
 
 	
@@ -319,17 +331,19 @@ void ALimitBreakWarzoneCharacter::OnActiveGEAdded(UAbilitySystemComponent* Targe
 	FGameplayTagContainer AssetTags;
 	SpecApplied.GetAllAssetTags(AssetTags);
 
-	// 1. 遍历这个 GE 携带的所有标签
+	// 获取所有的 Granted Tags (这是 GA 的 Activation Owned Tags 真正起作用的地方)
+	FGameplayTagContainer GrantedTags;
+	SpecApplied.GetAllGrantedTags(GrantedTags);
+
+	// 合并这两组标签
+	AssetTags.AppendTags(GrantedTags);
+
 	for (FGameplayTag Tag : AssetTags)
 	{
-		// 2. 检查是否是我们定义的“状态效果”标签（以 State.Effect 开头）
-		if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("State.Effect"))))
+		// 【核心修正】允许转发 State.Effect 和 State.Weapon 下的所有标签
+		if (Tag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("State.Effect"))) ||
+			Tag.MatchesTag(FGameplayTag::RequestGameplayTag(FName("State.Weapon"))))
 		{
-			// 3. 【核心】为这个具体的 GE 实例绑定“层数变化”监听
-			// 这样当层数从 1 变 2 时，系统会自动调用 OnStackChanged
-			AbilitySystemComponent->OnGameplayEffectStackChangeDelegate(ActiveHandle)->AddUObject(this, &ALimitBreakWarzoneCharacter::OnStackChanged);
-
-			// 4. 广播给 UI：新增了一个状态，层数为初始层数，未移除(false)
 			OnPlayerStatusChanged.Broadcast(Tag, SpecApplied.GetStackCount(), false);
 		}
 	}
@@ -384,4 +398,22 @@ void ALimitBreakWarzoneCharacter::AbilityInputReleased(EHeroInputID InputID)
 	{
 		AbilitySystemComponent->AbilityLocalInputReleased(static_cast<int32>(InputID));
 	}
+}
+
+void ALimitBreakWarzoneCharacter::OnAmmoChangedNative(const FOnAttributeChangeData& Data)
+{
+	OnAmmoChanged.Broadcast(Data.NewValue, AttributeSet->GetMaxAmmo());
+}
+
+void ALimitBreakWarzoneCharacter::OnReloadTagChanged(const FGameplayTag Tag, int32 NewCount)
+{
+	// NewCount > 0 代表标签出现了（开始装弹）
+	// NewCount == 0 代表标签被清空了（装弹结束）
+	bool bRemoved = (NewCount == 0);
+	
+	// 依然通过你之前的委托广播出去，这样你蓝图里的 UI 逻辑一行都不用改！
+	OnPlayerStatusChanged.Broadcast(Tag, NewCount, bRemoved);
+	
+	// 调试打印：确认 C++ 确实“喊”出来了
+	UE_LOG(LogTemp, Warning, TEXT("C++: Reload Tag Changed! Count: %d"), NewCount);
 }
