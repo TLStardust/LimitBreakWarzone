@@ -107,8 +107,6 @@ protected:
 	UPROPERTY(EditAnywhere, BlueprintReadWrite, Category = "GAS|Setup")
 	TArray<TSubclassOf<class UGameplayAbility>> GlobalAbilities;
 	
-	// 当输入被触发时调用的通用函数
-	void SendInputToGAS(EHeroInputID InputID, bool bPressed);
 
 	// 辅助函数：赋予初始技能
 	void GiveDefaultAbilities();
@@ -169,6 +167,18 @@ public:
 	/** Getter for the bool */
 	UFUNCTION(BlueprintCallable, Category = Weapon)
 	bool GetHasRifle();
+	
+	// 基础灵敏度乘数（默认 1.0）
+	UPROPERTY(BlueprintReadWrite, Category = "Settings")
+	float MouseSensitivity = 1.0f;
+	
+	// 保存设置
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	void SaveSettings();
+
+	// 加载设置
+	UFUNCTION(BlueprintCallable, Category = "Settings")
+	void LoadSettings();
 
 protected:
 	/** Called for movement input */
@@ -190,13 +200,12 @@ public:
 	UFUNCTION(BlueprintCallable)
 	void SwitchFormLogic(FGameplayTag NewFormTag);
 	
-	// 在蓝图细节面板指定 WBP_MainHUD
-	UPROPERTY(EditAnywhere, BlueprintReadOnly, Category = "UI")
-	TSubclassOf<UUserWidget> HUDWidgetClass;
-
 	// 存储生成的实例
 	UPROPERTY()
 	TObjectPtr<UUserWidget> HUDWidget;
+	
+	void SetHUDReference(UUserWidget* InHUD) { HUDWidget = InHUD; }
+	
 	
 };
 

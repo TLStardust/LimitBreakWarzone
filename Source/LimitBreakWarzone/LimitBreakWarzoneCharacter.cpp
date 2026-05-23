@@ -15,6 +15,8 @@
 #include "Blueprint/UserWidget.h"
 #include "PXGameplayAbility.h"
 #include "GameplayEffectTypes.h"
+#include "PXSaveGame.h"
+#include "Kismet/GameplayStatics.h"
 
 DEFINE_LOG_CATEGORY(LogTemplateCharacter);
 
@@ -69,16 +71,6 @@ void ALimitBreakWarzoneCharacter::BeginPlay()
 	GiveDefaultAbilities();
 	SwitchFormLogic(FGameplayTag::RequestGameplayTag(FName("State.Form.Fire")));
 	
-	// 仅在本地控制的玩家机器上创建 UI
-	if (IsLocallyControlled() && HUDWidgetClass)
-	{
-		HUDWidget = CreateWidget<UUserWidget>(GetWorld(), HUDWidgetClass);
-		if (HUDWidget)
-		{
-			HUDWidget->AddToViewport();
-		}
-	}
-	
 	if (AbilitySystemComponent && AttributeSet)
 	{
 		// 1. 绑定血量监听
@@ -103,7 +95,8 @@ void ALimitBreakWarzoneCharacter::BeginPlay()
 			EGameplayTagEventType::NewOrRemoved // 监听“新增”或“移除”
 		).AddUObject(this, &ALimitBreakWarzoneCharacter::OnReloadTagChanged);
 	}
-
+	
+	LoadSettings();
 	
 }
 
@@ -195,8 +188,8 @@ void ALimitBreakWarzoneCharacter::Look(const FInputActionValue& Value)
 	if (Controller != nullptr)
 	{
 		// add yaw and pitch input to controller
-		AddControllerYawInput(LookAxisVector.X);
-		AddControllerPitchInput(LookAxisVector.Y);
+		AddControllerYawInput(LookAxisVector.X * MouseSensitivity * 0.1f);
+		AddControllerPitchInput(LookAxisVector.Y * MouseSensitivity * 0.1f);
 	}
 }
 
@@ -306,20 +299,6 @@ void ALimitBreakWarzoneCharacter::GiveDefaultAbilities()
 	}
 }
 
-void ALimitBreakWarzoneCharacter::SendInputToGAS(EHeroInputID InputID, bool bPressed)
-{
-	if (!AbilitySystemComponent) return;
-
-	// 根据输入 ID 触发技能
-	// 这里的逻辑可以进一步优化，目前先留出位置
-	if (bPressed)
-	{
-		// 通知 ASC 输入按下了
-		// 注意：这需要你的 GA 设置了对应的 InputID 或者通过 Tag 匹配
-		UE_LOG(LogTemp, Log, TEXT("Input Pressed: %d"), static_cast<int32>(InputID));
-	}
-}
-
 void ALimitBreakWarzoneCharacter::OnHealthChangedNative(const FOnAttributeChangeData& Data)
 {
 	// 广播给蓝图 UI
@@ -407,13 +386,36 @@ void ALimitBreakWarzoneCharacter::OnAmmoChangedNative(const FOnAttributeChangeDa
 
 void ALimitBreakWarzoneCharacter::OnReloadTagChanged(const FGameplayTag Tag, int32 NewCount)
 {
-	// NewCount > 0 代表标签出现了（开始装弹）
-	// NewCount == 0 代表标签被清空了（装弹结束）
-	bool bRemoved = (NewCount == 0);
-	
-	// 依然通过你之前的委托广播出去，这样你蓝图里的 UI 逻辑一行都不用改！
+	bool bRemoved = NewCount == 0;
 	OnPlayerStatusChanged.Broadcast(Tag, NewCount, bRemoved);
+}
+
+void ALimitBreakWarzoneCharacter::SaveSettings()
+{
+	// 1. 创建一个存档对象实例
+	UPXSaveGame* SaveGameInstance = Cast<UPXSaveGame>(UGameplayStatics::CreateSaveGameObject(UPXSaveGame::StaticClass()));
+
+	// 2. 将当前变量填入实例
+	SaveGameInstance->Sensitivity = MouseSensitivity;
+
+	// 3. 写入硬盘（SlotName 是文件名，UserIndex 区分不同玩家）
+	UGameplayStatics::SaveGameToSlot(SaveGameInstance, TEXT("SettingsSlot"), 0);
 	
-	// 调试打印：确认 C++ 确实“喊”出来了
-	UE_LOG(LogTemp, Warning, TEXT("C++: Reload Tag Changed! Count: %d"), NewCount);
+	UE_LOG(LogTemp, Warning, TEXT("Settings Saved! Sensitivity: %f"), MouseSensitivity);
+}
+
+void ALimitBreakWarzoneCharacter::LoadSettings()
+{
+	// 1. 检查存档文件是否存在
+	if (UGameplayStatics::DoesSaveGameExist(TEXT("SettingsSlot"), 0))
+	{
+		// 2. 加载并转换
+		UPXSaveGame* LoadGameInstance = Cast<UPXSaveGame>(UGameplayStatics::LoadGameFromSlot(TEXT("SettingsSlot"), 0));
+		if (LoadGameInstance)
+		{
+			// 3. 将数值应用到游戏变量
+			MouseSensitivity = LoadGameInstance->Sensitivity;
+			UE_LOG(LogTemp, Warning, TEXT("Settings Loaded! Sensitivity: %f"), MouseSensitivity);
+		}
+	}
 }
