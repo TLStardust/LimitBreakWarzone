@@ -49,3 +49,15 @@ void UPXGameplayAbility::PredictPath(FPredictProjectilePathParams PredictParams,
 	// 调用引擎底层
 	UGameplayStatics::PredictProjectilePath(GetWorld(), PredictParams, PredictResult);
 }
+
+float UPXGameplayAbility::CalculateMontagePlayRate(UAnimMontage* Montage, float TargetDuration) const
+{
+	if (!Montage || TargetDuration <= 0.f) return 1.0f;
+
+	// 获取蒙太奇的原始秒数（比如 0.6s）
+	float OriginalLength = Montage->GetPlayLength();
+
+	// 核心公式：原始长度 / 目标长度
+	// 例子：0.6s / 0.2s = 3.0。代表 3 倍速播放才能在 0.2s 播完。
+	return OriginalLength / TargetDuration;
+}

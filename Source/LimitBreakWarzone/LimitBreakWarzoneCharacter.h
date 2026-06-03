@@ -193,6 +193,7 @@ protected:
 
 public:
 	/** Returns Mesh1P subobject **/
+	UFUNCTION(BlueprintCallable, Category = Mesh)
 	USkeletalMeshComponent* GetMesh1P() const { return Mesh1P; }
 	/** Returns FirstPersonCameraComponent subobject **/
 	UCameraComponent* GetFirstPersonCameraComponent() const { return FirstPersonCameraComponent; }
@@ -205,7 +206,5 @@ public:
 	TObjectPtr<UUserWidget> HUDWidget;
 	
 	void SetHUDReference(UUserWidget* InHUD) { HUDWidget = InHUD; }
-	
-	
 };
 

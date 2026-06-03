@@ -4,6 +4,7 @@
 
 #include "CoreMinimal.h"
 #include "Kismet/BlueprintFunctionLibrary.h"
+#include "InputMappingContext.h"
 #include "PXBlueprintFunctionLibrary.generated.h"
 
 /**
@@ -22,4 +23,9 @@ public:
 	UFUNCTION(BlueprintCallable, Category = "Visuals")
 	static void DrawPathLine(UObject* WorldContextObject, const TArray<FVector>& Points, FLinearColor Color, float Thickness = 5.0f, float Duration = 0.05f);
 	
+	UFUNCTION(BlueprintPure, Category = "Input")
+	static FText GetKeyNameForAction(const APlayerController* PC, const UInputAction* Action);
+	
+	UFUNCTION(BlueprintPure, Category = "GAS|UI")
+	static void GetCooldownInfo(UAbilitySystemComponent* ASC, FGameplayTag CooldownTag, float& RemainingTime, float& Duration);
 };

@@ -6,6 +6,7 @@
 #include "Abilities/GameplayAbility.h"
 #include "Kismet/GameplayStaticsTypes.h"
 #include "PXGameplayAbility.generated.h"
+class UInputAction; 
 
 /**
  * 
@@ -32,6 +33,18 @@ public:
 	TObjectPtr<UTexture2D> AbilityIcon; // 技能图标
 
 	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
-	FText KeyHint; // 按键提示，如 "Q", "E", "Shift"
+	TObjectPtr<UInputAction> AssociatedAction;
+	
+	// 冷却标签：必须和你在 GE_Cooldown 里设置的 Granted Tag 一致
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	FGameplayTag CooldownTag;
+
+	// 激活状态标签：当技能激活时，角色身上会拥有的标签（用于显示黄色高亮）
+	// 例如：State.Ability.Aiming
+	UPROPERTY(EditDefaultsOnly, BlueprintReadOnly, Category = "UI")
+	FGameplayTag ActiveStatusTag;
+	
+	UFUNCTION(BlueprintPure, Category = "Ability|Animation")
+	float CalculateMontagePlayRate(UAnimMontage* Montage, float TargetDuration) const;
 	
 };

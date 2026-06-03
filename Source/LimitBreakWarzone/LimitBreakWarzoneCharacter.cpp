@@ -406,14 +406,11 @@ void ALimitBreakWarzoneCharacter::SaveSettings()
 
 void ALimitBreakWarzoneCharacter::LoadSettings()
 {
-	// 1. 检查存档文件是否存在
 	if (UGameplayStatics::DoesSaveGameExist(TEXT("SettingsSlot"), 0))
 	{
-		// 2. 加载并转换
 		UPXSaveGame* LoadGameInstance = Cast<UPXSaveGame>(UGameplayStatics::LoadGameFromSlot(TEXT("SettingsSlot"), 0));
 		if (LoadGameInstance)
 		{
-			// 3. 将数值应用到游戏变量
 			MouseSensitivity = LoadGameInstance->Sensitivity;
 			UE_LOG(LogTemp, Warning, TEXT("Settings Loaded! Sensitivity: %f"), MouseSensitivity);
 		}
