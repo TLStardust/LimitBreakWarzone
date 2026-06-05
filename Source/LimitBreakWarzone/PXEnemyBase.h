@@ -32,10 +32,22 @@ public:
 	
 	UPROPERTY(BlueprintAssignable, Category = "GAS|UI")
 	FOnStatusChanged OnStatusChanged;
+	
+	// 监听死亡事件
+	UFUNCTION(BlueprintImplementableEvent, Category = "Combat")
+	void OnEnemyDeath();
 
 protected:
 	// Called when the game starts or when spawned
 	virtual void BeginPlay() override;
+	
+	// 防止多次触发死亡逻辑
+	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "Combat")
+	bool bIsDead = false;
+
+	// 核心死亡处理函数 (C++ 实现)
+	virtual void HandleDeath();
+
 	
 	// GAS 核心组件
 	UPROPERTY(VisibleAnywhere, BlueprintReadOnly, Category = "GAS")

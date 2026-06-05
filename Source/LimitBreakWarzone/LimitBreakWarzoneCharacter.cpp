@@ -58,6 +58,10 @@ void ALimitBreakWarzoneCharacter::BeginPlay()
 {
 	// Call the base class  
 	Super::BeginPlay();
+	
+	if (AvailableForms.Num() > 0) {
+		ActiveFormAsset = AvailableForms[0]; 
+	}
 
 	// Add Input Mapping Context
 	if (APlayerController* PlayerController = Cast<APlayerController>(Controller))
@@ -69,6 +73,7 @@ void ALimitBreakWarzoneCharacter::BeginPlay()
 	}
 	
 	GiveDefaultAbilities();
+	
 	SwitchFormLogic(FGameplayTag::RequestGameplayTag(FName("State.Form.Fire")));
 	
 	if (AbilitySystemComponent && AttributeSet)

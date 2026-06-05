@@ -4,9 +4,13 @@
 #include "PXEnemyBase.h"
 #include "AbilitySystemComponent.h"
 #include "PXAttributeSet.h"
+#include "Components/CapsuleComponent.h"
 #include "Components/WidgetComponent.h"
 #include "Kismet/KismetMathLibrary.h" // 必须包含这个数学库
 #include "Kismet/GameplayStatics.h"   // 用于获取玩家引用
+#include "AIController.h"
+#include "Navigation/PathFollowingComponent.h"
+
 
 
 // Sets default values
@@ -119,6 +123,11 @@ void APXEnemyBase::HealthChanged(const FOnAttributeChangeData& Data)
 {
 	// 当血量变化时，触发委托通知蓝图 UI
 	OnHealthChanged.Broadcast(Data.NewValue, AttributeSet->GetMaxHealth());
+	// 只有血量首次降为 0 时触发
+	if (Data.NewValue <= 0.0f && !bIsDead)
+	{
+		HandleDeath();
+	}
 }
 
 void APXEnemyBase::OnActiveGEAdded(UAbilitySystemComponent* Target, const FGameplayEffectSpec& SpecApplied, FActiveGameplayEffectHandle ActiveHandle)
@@ -179,4 +188,48 @@ void APXEnemyBase::OnActiveGERemoved(const FActiveGameplayEffect& RemovedEffect)
 			OnStatusChanged.Broadcast(Tag, 0, true);
 		}
 	}
+}
+
+void APXEnemyBase::HandleDeath()
+{
+	if (bIsDead) return;
+	bIsDead = true;
+
+	// 1. 关闭胶囊体碰撞（防止玩家撞到尸体产生位移冲突）
+	// 这相当于蓝图里的 Set Collision Enabled -> No Collision
+	GetCapsuleComponent()->SetCollisionEnabled(ECollisionEnabled::NoCollision);
+	GetCapsuleComponent()->SetCollisionResponseToAllChannels(ECR_Ignore);
+
+	// 2. 开启布娃娃系统 (Ragdoll)
+	// 必须先开启模拟，再设置碰撞预设
+	GetMesh()->SetSimulatePhysics(true);
+	GetMesh()->SetAllBodiesSimulatePhysics(true);
+	GetMesh()->SetCollisionProfileName(TEXT("Ragdoll"));
+	GetMesh()->SetCollisionEnabled(ECollisionEnabled::QueryAndPhysics);
+
+	// 3. 停止 AI
+	// 让 AI 控制器放弃对这个身体的控制
+	if (AAIController* AIC = Cast<AAIController>(GetController()))
+	{
+		AIC->StopMovement();
+		AIC->UnPossess();
+	}
+	
+	// --- 【新增：销毁 UI】 ---
+	if (HealthBarWidget)
+	{
+		// 1. 先让它不可见，防止销毁瞬间的视觉闪烁
+		HealthBarWidget->SetVisibility(false);
+		
+		// 2. 彻底从 Actor 身上移除该组件并释放内存
+		// 这相当于蓝图里的 DestroyComponent 节点
+		HealthBarWidget->DestroyComponent();
+	}
+
+	// 4. 设置自动销毁时间
+	// 5 秒后这具尸体从世界上彻底消失，节省内存
+	//SetLifeSpan(5.0f);
+
+	// 5. 触发蓝图事件，让美术去处理火花和音效
+	OnEnemyDeath();
 }

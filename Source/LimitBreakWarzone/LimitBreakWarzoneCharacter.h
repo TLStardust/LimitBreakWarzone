@@ -15,6 +15,7 @@ class USkeletalMeshComponent;
 class UCameraComponent;
 class UInputAction;
 class UInputMappingContext;
+class UPXFormAsset;
 struct FInputActionValue;
 struct FOnAttributeChangeData; 
 

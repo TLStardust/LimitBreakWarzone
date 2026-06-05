@@ -9,6 +9,7 @@
 #include "Kismet/GameplayStatics.h"
 #include "LimitBreakWarzoneCharacter.h"
 #include "Misc/OutputDeviceNull.h"
+#include "GameFramework/GameUserSettings.h"
 
 void ALimitBreakWarzonePlayerController::BeginPlay()
 {
@@ -20,6 +21,18 @@ void ALimitBreakWarzonePlayerController::BeginPlay()
 		// add the mapping context so we get controls
 		Subsystem->AddMappingContext(InputMappingContext, 0);
 		UE_LOG(LogTemp, Warning, TEXT("BeginPlay"));
+	}
+	
+	if (IsLocalController())
+	{
+		UGameUserSettings* Settings = UGameUserSettings::GetGameUserSettings();
+        
+		// 1. 设置为窗口化全屏 (这一步是自适应的核心)
+		// EWindowMode::WindowedFullscreen 会让游戏自动覆盖当前屏幕的分辨率
+		Settings->SetFullscreenMode(EWindowMode::WindowedFullscreen);
+        
+		// 2. 确认应用设置
+		Settings->ApplySettings(true);
 	}
 	
 	// 1. 创建 UI (只创建一次)
